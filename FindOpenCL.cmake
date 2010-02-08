@@ -10,13 +10,13 @@
 IF (APPLE)
 
   FIND_LIBRARY(OPENCL_LIBRARIES OpenCL DOC "OpenCL lib for OSX")
-  FIND_PATH(OPENCL_INCLUDE_DIR cl.h DOC "Include for OpenCL on OSX")
+  FIND_PATH(OPENCL_INCLUDE_DIR OpenCL/cl.h DOC "Include for OpenCL on OSX")
 
 ELSE (APPLE)
 
 	IF (WIN32)
 	
-	    FIND_PATH(OPENCL_INCLUDE_DIR cl.h PATH_SUFFIXES CL)
+	    FIND_PATH(OPENCL_INCLUDE_DIR CL/cl.h)
 	
 	    # TODO this is only a hack assuming the 64 bit library will
 	    # not be found on 32 bit system
@@ -29,7 +29,7 @@ ELSE (APPLE)
 	
 	    # Unix style platforms
 	    # We also search for OpenCL in the NVIDIA SDK default location
-	    FIND_PATH(OPENCL_INCLUDE_DIR cl.h PATH_SUFFIXES CL)
+	    FIND_PATH(OPENCL_INCLUDE_DIR CL/cl.h)
 	    FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
 	      ENV LD_LIBRARY_PATH
 	    )

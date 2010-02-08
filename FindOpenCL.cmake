@@ -26,14 +26,21 @@ ELSE (APPLE)
 	    ENDIF( OPENCL_LIBRARIES )
 	
 	ELSE (WIN32)
-	
-	    # Unix style platforms
-	    # We also search for OpenCL in the NVIDIA SDK default location
-	    FIND_PATH(OPENCL_INCLUDE_DIR CL/cl.h)
-	    FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
-	      ENV LD_LIBRARY_PATH
-	    )
-	
+
+            # Unix style platforms
+            FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
+              ENV LD_LIBRARY_PATH
+            )
+
+            GET_FILENAME_COMPONENT(OPENCL_LIB_DIR ${OPENCL_LIBRARIES} PATH)
+            GET_FILENAME_COMPONENT(OPENCL_INC_CAND ${OPENCL_LIB_DIR}/../../include ABSOLUTE)
+
+            # The AMD SDK currently does not place its headers
+            # in /usr/include, therefore also search relative
+            # to the library
+            FIND_PATH(OPENCL_INCLUDE_DIR CL/cl.h PATHS ${OPENCL_INC_CAND})
+            MESSAGE(${OPENCL_INCLUDE_DIR})
+
 	ENDIF (WIN32)
 
 ENDIF (APPLE)

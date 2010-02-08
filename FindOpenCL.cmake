@@ -39,7 +39,6 @@ ELSE (APPLE)
             # in /usr/include, therefore also search relative
             # to the library
             FIND_PATH(OPENCL_INCLUDE_DIR CL/cl.h PATHS ${OPENCL_INC_CAND})
-            MESSAGE(${OPENCL_INCLUDE_DIR})
 
 	ENDIF (WIN32)
 

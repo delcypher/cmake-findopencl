@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/..")
 
 find_package( OpenCL REQUIRED )
 
-include_directories( ${OPENCL_INCLUDE_DIR} )
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( example example.cpp )
 target_link_libraries( example ${OPENCL_LIBRARIES} )

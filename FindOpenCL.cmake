@@ -52,7 +52,7 @@ ELSE (APPLE)
 
             # Unix style platforms
             FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
-              PATHS LD_LIBRARY_PATH ENV OpenCL_LIBPATH
+              PATHS ENV LD_LIBRARY_PATH ENV OpenCL_LIBPATH
             )
 
             GET_FILENAME_COMPONENT(OPENCL_LIB_DIR ${OPENCL_LIBRARIES} PATH)

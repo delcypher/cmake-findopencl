@@ -64,6 +64,19 @@ ELSE (APPLE)
 		FIND_PATH(OPENCL_INCLUDE_DIRS CL/cl.h PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
 		FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS CL/cl.hpp PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
 
+		IF( CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" )
+			# For ARM's Mali libOpenCL.so does not have the
+			# OpenCL symbols. These are actually in libmali
+			FIND_LIBRARY(MALI_LIBRARY mali)
+			IF( MALI_LIBRARY )
+				# Found Mali library so append to OpenCL library list
+				LIST(APPEND OPENCL_LIBRARIES ${MALI_LIBRARY})
+				message(STATUS "Found ARM Mali library ${MALI_LIBRARY}")
+			ELSE()
+				message(WARNING "ARM target detected but Mali library was not found.")
+			ENDIF()
+		ENDIF()
+
 	ENDIF (WIN32)
 
 ENDIF (APPLE)

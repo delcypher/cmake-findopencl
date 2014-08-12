@@ -51,32 +51,75 @@ ELSE (APPLE)
 	ELSE (WIN32)
 
 		# Unix style platforms
+
+		# Guess the library path for ARM
+		IF (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+			option(USE_MGD OFF "Use Mali Graphics debugger libraries")
+			
+			if (USE_MGD)
+				set(ARM_LIBRARY_PATH_GUESS "/usr/local/lib/mgd")
+			else()
+				set(ARM_LIBRARY_PATH_GUESS "/usr/local/lib/mali/fbdev")
+			endif()
+
+			# This is a hack.
+			# Normally find_library() only executes once.
+			# However because USE_MGD might change we need
+			# force detection everytime. Clearing the cache
+			# variables does this.
+			set(OPENCL_LIBRARIES "OPENCL_LIBRARIES-NOTFOUND" CACHE PATH "" FORCE)
+			set(MALI_LIBRARY "MALI_LIBRARY-NOTFOUND" CACHE PATH "" FORCE)
+		ENDIF()
+
 		FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
-			PATHS ENV LD_LIBRARY_PATH ENV OpenCL_LIBPATH
+			PATHS ENV LD_LIBRARY_PATH 
+			      ENV OpenCL_LIBPATH
+			      "${ARM_LIBRARY_PATH_GUESS}"
 		)
 
-		GET_FILENAME_COMPONENT(OPENCL_LIB_DIR ${OPENCL_LIBRARIES} PATH)
+		# OPENCL_LIBRARIES might be a list so just use the first
+		list(GET OPENCL_LIBRARIES 0 first_library)
+		GET_FILENAME_COMPONENT(OPENCL_LIB_DIR ${first_library} PATH)
 		GET_FILENAME_COMPONENT(_OPENCL_INC_CAND ${OPENCL_LIB_DIR}/../../include ABSOLUTE)
+
+		if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+			# For ARM's Mali libOpenCL.so does not have the
+			# OpenCL symbols. These are actually in libmali
+
+			# FIXME: This is gross!
+			if (NOT MALI_LIBRARY)
+				set(IS_FIRST_RUN true)
+			else()
+				set(IS_FIRST_RUN false)
+			endif()
+
+			FIND_LIBRARY(MALI_LIBRARY mali
+			             PATH "${ARM_LIBRARY_PATH_GUESS}" 
+				    )
+			IF( MALI_LIBRARY )
+				# Found Mali library so append to OpenCL library list
+
+				# FIXME: This is gross!
+                                # OPENCL_LIBRARIES is a cache variable so we need to be careful
+				# to not use list(append ) which will create a non-cache variable which
+				# will hide the cache variable.
+				# We use set with FORCE here. So we need to be really careful to not keep
+				# appending to the list everytime cmake is run
+				if (IS_FIRST_RUN)
+					set(OPENCL_LIBRARIES "${OPENCL_LIBRARIES};${MALI_LIBRARY}" CACHE PATH "" FORCE)
+				endif()
+
+				message(STATUS "Found ARM Mali library ${MALI_LIBRARY}")
+			ELSE()
+				message(WARNING "ARM target detected but Mali library was not found.")
+			ENDIF()
+		endif()
 
 		# The AMD SDK currently does not place its headers
 		# in /usr/include, therefore also search relative
 		# to the library
 		FIND_PATH(OPENCL_INCLUDE_DIRS CL/cl.h PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
 		FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS CL/cl.hpp PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
-
-		IF( CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" )
-			# For ARM's Mali libOpenCL.so does not have the
-			# OpenCL symbols. These are actually in libmali
-			FIND_LIBRARY(MALI_LIBRARY mali)
-			IF( MALI_LIBRARY )
-				# Found Mali library so append to OpenCL library list
-				LIST(APPEND OPENCL_LIBRARIES ${MALI_LIBRARY})
-				message(STATUS "Found ARM Mali library ${MALI_LIBRARY}")
-			ELSE()
-				message(WARNING "ARM target detected but Mali library was not found.")
-			ENDIF()
-		ENDIF()
-
 	ENDIF (WIN32)
 
 ENDIF (APPLE)
